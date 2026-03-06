@@ -6,7 +6,7 @@
 			"label": "Supermemory API Key",
 			"sensitive": true,
 			"placeholder": "sm_...",
-			"help": "Your API key from console.supermemory.ai (or use ${SUPERMEMORY_OPENCLAW_API_KEY})"
+			"help": "Your API key from app.supermemory.ai (or use ${SUPERMEMORY_OPENCLAW_API_KEY})"
 		},
 		"containerTag": {
 			"label": "Container Tag",
@@ -37,6 +37,12 @@
 		"captureMode": {
 			"label": "Capture Mode",
 			"help": "'all' (default) = filter out short texts and injected context, 'everything' = capture all messages",
+			"advanced": true
+		},
+		"entityContext": {
+			"label": "Entity Context",
+			"placeholder": "Custom instructions for memory extraction...",
+			"help": "Instructions that guide what memories are extracted from conversations. Leave blank to use the built-in default.",
 			"advanced": true
 		},
 		"debug": {
@@ -71,6 +77,7 @@
 			"maxRecallResults": { "type": "number", "minimum": 1, "maximum": 20 },
 			"profileFrequency": { "type": "number", "minimum": 1, "maximum": 500 },
 			"captureMode": { "type": "string", "enum": ["everything", "all"] },
+			"entityContext": { "type": "string" },
 			"debug": { "type": "boolean" },
 			"enableCustomContainerTags": { "type": "boolean" },
 			"customContainers": {
