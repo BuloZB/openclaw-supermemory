@@ -18,33 +18,27 @@ export function detectCategory(text: string): MemoryCategory {
 
 export const DEFAULT_ENTITY_CONTEXT = `Conversation between a user and an AI assistant. Format: [role: user] ... [user:end] and [role: assistant] ... [assistant:end].
 
-You do NOT need to generate memories for every message. Most messages are not worth remembering. Only extract things that will be useful in FUTURE conversations.
+You do NOT need to generate memories for every message. Most messages are not worth remembering. Only extract things useful in FUTURE conversations.
 
 REMEMBER (lasting personal facts):
-- "doesn't eat pork or beef" ← dietary restriction, useful forever
+- "doesn't eat pork or beef" ← dietary restriction
 - "prefers TypeScript over JavaScript" ← preference
 - "works at Acme Corp as a backend engineer" ← personal detail
-- "lives in San Francisco" ← personal detail
-- "uses Neovim, prefers dark themes" ← preference
 - "building a recipe app in Next.js" ← ongoing project
-- "weekly standup on Mondays at 10am EST" ← routine
 - "remember my server IP is 192.168.1.100" ← user explicitly asked to remember
 
 DO NOT REMEMBER (session-specific, ephemeral, or assistant-generated):
 - "looking for food recommendations" ← temporary intent, not a lasting fact
-- "wants a list of YC companies" ← one-time task, not a preference
-- "found 193 YC companies from the directory" ← the ASSISTANT did this, not the user
-- "saved a JSON file at /path/to/file" ← the ASSISTANT did this
-- "is using Algolia API to search" ← implementation detail of current task
-- "wants chicken pho, ramen, udon..." ← assistant's suggestions, not user's preference
+- "found 193 YC companies from the directory" ← the ASSISTANT did this
+- "wants chicken pho, ramen, udon..." ← assistant's suggestions, not user preference
 - Any action the assistant performed (searching, writing files, generating code)
 - Any recommendation or list the assistant provided
 - Any in-progress task status or intermediate step
 
 KEY RULES:
-- The assistant's output is CONTEXT ONLY — never attribute assistant actions to the user
-- If the user asks "find X" or "do Y", that is a one-time request, NOT a memory
-- Only store preferences if the user explicitly states them ("I like...", "I prefer...", "I always...")
+- Assistant output is CONTEXT ONLY — never attribute assistant actions to the user
+- "find X" or "do Y" is a one-time request, NOT a memory
+- Only store preferences the user explicitly states ("I like...", "I prefer...", "I always...")
 - When in doubt, do NOT create a memory. Less is more.`
 
 export function buildDocumentId(sessionKey: string): string {
