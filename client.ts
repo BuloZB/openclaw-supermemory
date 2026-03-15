@@ -1,11 +1,11 @@
 import Supermemory from "supermemory"
 import {
-	getRequestIntegrity,
 	sanitizeContent,
 	validateApiKeyFormat,
 	validateContainerTag,
 } from "./lib/validate.js"
 import { log } from "./logger.ts"
+import { clampEntityContext } from "./memory.ts"
 
 export type SearchResult = {
 	id: string
@@ -47,12 +47,7 @@ export class SupermemoryClient {
 			log.warn(`container tag warning: ${tagCheck.reason}`)
 		}
 
-		const integrityHeaders = getRequestIntegrity(apiKey, containerTag)
-
-		this.client = new Supermemory({
-			apiKey,
-			defaultHeaders: integrityHeaders,
-		})
+		this.client = new Supermemory({ apiKey })
 		this.containerTag = containerTag
 		log.info(`initialized (container: ${containerTag})`)
 	}
@@ -74,12 +69,16 @@ export class SupermemoryClient {
 			containerTag: tag,
 		})
 
+		const clampedCtx = entityContext
+			? clampEntityContext(entityContext)
+			: undefined
+
 		const result = await this.client.add({
 			content: cleaned,
 			containerTag: tag,
 			...(metadata && { metadata }),
 			...(customId && { customId }),
-			...(entityContext && { entityContext }),
+			...(clampedCtx && { entityContext: clampedCtx }),
 		})
 
 		log.debugResponse("add", { id: result.id })
