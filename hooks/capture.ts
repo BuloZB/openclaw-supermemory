@@ -2,6 +2,7 @@ import type { SupermemoryClient } from "../client.ts"
 import type { SupermemoryConfig } from "../config.ts"
 import { log } from "../logger.ts"
 import { buildDocumentId, stripInboundMetadata } from "../memory.ts"
+import { isInteractiveTrigger } from "./trigger.ts"
 
 const SKIPPED_PROVIDERS = ["exec-event", "cron-event", "heartbeat"]
 
@@ -30,14 +31,17 @@ export function buildCaptureHandler(
 		event: Record<string, unknown>,
 		ctx: Record<string, unknown>,
 	) => {
+		const trigger = ctx.trigger as string | undefined
+		if (!isInteractiveTrigger(trigger)) {
+			return
+		}
+
 		log.info(
 			`agent_end fired: provider="${ctx.messageProvider}" success=${event.success}`,
 		)
 		const provider = ctx.messageProvider as string
-		const trigger = ctx.trigger as string | undefined
-		const isAutomatedRun = trigger && trigger !== "user" && trigger !== "manual"
 
-		if (isAutomatedRun || SKIPPED_PROVIDERS.includes(provider)) {
+		if (SKIPPED_PROVIDERS.includes(provider)) {
 			return
 		}
 
