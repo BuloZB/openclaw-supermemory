@@ -4,10 +4,12 @@ import * as path from "node:path"
 import * as readline from "node:readline"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
 import type { SupermemoryClient } from "../client.ts"
-import type { SupermemoryConfig } from "../config.ts"
 import { log } from "../logger.ts"
 
-export function registerCliSetup(api: OpenClawPluginApi): void {
+export function registerCli(
+	api: OpenClawPluginApi,
+	client?: SupermemoryClient,
+): void {
 	api.registerCli(
 		// biome-ignore lint/suspicious/noExplicitAny: openclaw SDK does not ship types
 		({ program }: { program: any }) => {
@@ -60,6 +62,9 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 
 					entries["openclaw-supermemory"] = {
 						enabled: true,
+						hooks: {
+							allowConversationAccess: true,
+						},
 						config: {
 							apiKey: apiKey.trim(),
 						},
@@ -190,6 +195,24 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 						console.log("  Invalid value, using default: all")
 					}
 
+					console.log("\nMemory usage display:")
+					console.log(
+						"  true  - Show how many memories were used in each response (recommended)",
+					)
+					console.log("  false - Hide memory usage counts from responses")
+					const showMemoryUsageInput = await ask(
+						"Show memory usage (true/false) [true]: ",
+					)
+					let showMemoryUsage = true
+					if (showMemoryUsageInput.trim().toLowerCase() === "false") {
+						showMemoryUsage = false
+					} else if (
+						showMemoryUsageInput.trim() &&
+						showMemoryUsageInput.trim().toLowerCase() !== "true"
+					) {
+						console.log("  Invalid value, using default: true")
+					}
+
 					console.log("\nEntity context:")
 					console.log(
 						"  Instructions that guide what memories are extracted from conversations.",
@@ -275,6 +298,7 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 					if (profileFrequency !== 50)
 						pluginConfig.profileFrequency = profileFrequency
 					if (captureMode !== "all") pluginConfig.captureMode = captureMode
+					if (!showMemoryUsage) pluginConfig.showMemoryUsage = false
 					if (entityContextInput.trim())
 						pluginConfig.entityContext = entityContextInput.trim()
 					if (enableCustomContainerTags)
@@ -289,6 +313,9 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 
 					entries["openclaw-supermemory"] = {
 						enabled: true,
+						hooks: {
+							allowConversationAccess: true,
+						},
 						config: pluginConfig,
 					}
 
@@ -311,6 +338,7 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 					console.log(`  Max results:      ${maxRecallResults}`)
 					console.log(`  Profile freq:     ${profileFrequency}`)
 					console.log(`  Capture mode:     ${captureMode}`)
+					console.log(`  Memory usage:     ${showMemoryUsage}`)
 					const entityPreview = entityContextInput.trim()
 					if (entityPreview) {
 						const truncated =
@@ -404,6 +432,9 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 					console.log(
 						`  Capture mode:     ${pluginConfig.captureMode ?? "all"}`,
 					)
+					console.log(
+						`  Memory usage:     ${pluginConfig.showMemoryUsage ?? true}`,
+					)
 					const entityCtx = pluginConfig.entityContext as string | undefined
 					if (entityCtx) {
 						const truncated =
@@ -418,24 +449,8 @@ export function registerCliSetup(api: OpenClawPluginApi): void {
 					console.log(`  Container count:  ${customContainers.length}`)
 					console.log("")
 				})
-		},
-		{ commands: ["supermemory"] },
-	)
-}
 
-export function registerCli(
-	api: OpenClawPluginApi,
-	client: SupermemoryClient,
-	_cfg: SupermemoryConfig,
-): void {
-	api.registerCli(
-		// biome-ignore lint/suspicious/noExplicitAny: openclaw SDK does not ship types
-		({ program }: { program: any }) => {
-			const cmd = program.commands.find(
-				// biome-ignore lint/suspicious/noExplicitAny: openclaw SDK does not ship types
-				(c: any) => c.name() === "supermemory",
-			)
-			if (!cmd) return
+			if (!client) return
 
 			cmd
 				.command("search")
@@ -512,6 +527,14 @@ export function registerCli(
 					console.log(`Wiped ${result.deletedCount} memories from "${tag}".`)
 				})
 		},
-		{ commands: ["supermemory"] },
+		{
+			descriptors: [
+				{
+					name: "supermemory",
+					description: "Supermemory long-term memory commands",
+					hasSubcommands: true,
+				},
+			],
+		},
 	)
 }
