@@ -21,6 +21,7 @@
 		"memory.ts",
 		"runtime.ts",
 		"types",
+		"lib/version-check.ts",
 		"lib/validate.d.ts",
 		"lib/validate.js",
 		"dist"
