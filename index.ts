@@ -71,22 +71,12 @@ export default {
 			api.registerMemoryFlushPlan?.(noopFlushPlan)
 		}
 
-		let sessionKey: string | undefined
-		const getSessionKey = () => sessionKey
-
-		api.on(
-			"session_start",
-			(_event: Record<string, unknown>, ctx: Record<string, unknown>) => {
-				if (ctx.sessionKey) sessionKey = ctx.sessionKey as string
-			},
-		)
-
 		registerSearchTool(api, client, cfg)
-		registerStoreTool(api, client, cfg, getSessionKey)
+		registerStoreTool(api, client, cfg)
 		registerForgetTool(api, client, cfg)
 		registerProfileTool(api, client, cfg)
 		registerSearchTool(api, client, cfg, "supermemory-search")
-		registerStoreTool(api, client, cfg, getSessionKey, "supermemory-save")
+		registerStoreTool(api, client, cfg, "supermemory-save")
 		registerForgetTool(api, client, cfg, "supermemory-forget")
 		registerProfileTool(api, client, cfg, "supermemory-profile")
 
@@ -95,10 +85,10 @@ export default {
 		}
 
 		if (cfg.autoCapture) {
-			api.on("agent_end", buildCaptureHandler(client, cfg, getSessionKey))
+			api.on("agent_end", buildCaptureHandler(client, cfg))
 		}
 
-		registerCommands(api, client, cfg, getSessionKey)
+		registerCommands(api, client, cfg)
 
 		api.registerService({
 			id: "openclaw-supermemory",
