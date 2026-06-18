@@ -8,8 +8,8 @@ import { registerCommands, registerStubCommands } from "./commands/slash.ts"
 import { parseConfig, supermemoryConfigSchema } from "./config.ts"
 import { buildCaptureHandler } from "./hooks/capture.ts"
 import { buildRecallHandler } from "./hooks/recall.ts"
-import { initLogger } from "./logger.ts"
 import { checkNpmUpdate, formatUpdateNotice } from "./lib/version-check.ts"
+import { initLogger } from "./logger.ts"
 import { buildMemoryRuntime, buildPromptSection } from "./runtime.ts"
 import { registerForgetTool } from "./tools/forget.ts"
 import { registerProfileTool } from "./tools/profile.ts"
@@ -17,7 +17,8 @@ import { registerSearchTool } from "./tools/search.ts"
 import { registerStoreTool } from "./tools/store.ts"
 
 const PLUGIN_VERSION = "2.1.14"
-const UPDATE_COMMAND = "openclaw plugins install @supermemory/openclaw-supermemory"
+const UPDATE_COMMAND =
+	"openclaw plugins install @supermemory/openclaw-supermemory"
 
 try {
 	const stateDir =
