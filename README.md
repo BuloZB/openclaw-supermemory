@@ -12,12 +12,11 @@ Long-term memory for OpenClaw. Automatically remembers conversations, recalls re
 openclaw plugins install @supermemory/openclaw-supermemory
 ```
 
-Restart OpenClaw after installing.
-
 ## Setup
 
 ```bash
 openclaw supermemory setup
+openclaw gateway restart
 ```
 
 Enter your API key from [app.supermemory.ai](https://app.supermemory.ai/?view=integrations). That's it.
@@ -26,6 +25,7 @@ Enter your API key from [app.supermemory.ai](https://app.supermemory.ai/?view=in
 
 ```bash
 openclaw supermemory setup-advanced
+openclaw gateway restart
 ```
 
 Configure all options interactively: container tag, auto-recall, auto-capture, capture mode, custom container tags, and more.
@@ -71,10 +71,11 @@ openclaw supermemory wipe               # Delete all memories (requires confirma
 
 ## Configuration
 
-Set API key via environment variable:
+Set API key (and, for self-hosted instances, the base URL) via environment variables:
 
 ```bash
 export SUPERMEMORY_OPENCLAW_API_KEY="sm_..."
+export SUPERMEMORY_BASE_URL="http://localhost:8000"   # optional; defaults to https://api.supermemory.ai
 ```
 
 Or configure in `~/.openclaw/openclaw.json`:
@@ -83,7 +84,8 @@ Or configure in `~/.openclaw/openclaw.json`:
 
 | Key                           | Type      | Default               | Description                                               |
 | ----------------------------- | --------- | --------------------- | --------------------------------------------------------- |
-| `apiKey`                      | `string`  | —                     | Supermemory API key.                                      |
+| `apiKey`                      | `string`  | —                       | Supermemory API key.                                      |
+| `baseUrl`                     | `string`  | `https://api.supermemory.ai` | API endpoint. Set to a self-hosted / local URL to point at your own instance; leave blank for the cloud. |
 | `containerTag`                | `string`  | `openclaw_{hostname}` | Root memory namespace.                                    |
 | `autoRecall`                  | `boolean` | `true`                | Inject relevant memories before every AI turn.            |
 | `autoCapture`                 | `boolean` | `true`                | Store conversations after every turn.                     |
@@ -100,11 +102,19 @@ Or configure in `~/.openclaw/openclaw.json`:
 ```json
 {
   "plugins": {
+    "slots": {
+      "memory": "openclaw-supermemory"
+    },
     "entries": {
       "openclaw-supermemory": {
         "enabled": true,
+        "hooks": {
+          "allowPromptInjection": true,
+          "allowConversationAccess": true
+        },
         "config": {
           "apiKey": "${SUPERMEMORY_OPENCLAW_API_KEY}",
+          "baseUrl": "https://api.supermemory.ai",
           "containerTag": "my_memory",
           "autoRecall": true,
           "autoCapture": true,

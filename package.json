@@ -1,6 +1,6 @@
 {
 	"name": "@supermemory/openclaw-supermemory",
-	"version": "2.1.13",
+	"version": "2.1.15",
 	"type": "module",
 	"description": "OpenClaw Supermemory memory plugin",
 	"license": "MIT",
@@ -21,6 +21,7 @@
 		"memory.ts",
 		"runtime.ts",
 		"types",
+		"lib/version-check.ts",
 		"lib/validate.d.ts",
 		"lib/validate.js",
 		"dist"

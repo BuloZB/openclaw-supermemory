@@ -4,7 +4,39 @@ import * as path from "node:path"
 import * as readline from "node:readline"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
 import type { SupermemoryClient } from "../client.ts"
+import { DEFAULT_BASE_URL } from "../config.ts"
 import { log } from "../logger.ts"
+
+const SUPERMEMORY_TOOL_NAMES = [
+	"supermemory_store",
+	"supermemory_search",
+	"supermemory_forget",
+	"supermemory_profile",
+]
+
+function appendUniqueStrings(value: unknown, entries: string[]): string[] {
+	const current = Array.isArray(value)
+		? value.filter((item): item is string => typeof item === "string")
+		: []
+	return Array.from(new Set([...current, ...entries]))
+}
+
+function ensureSupermemoryToolsAllowed(config: Record<string, unknown>): void {
+	if (
+		!config.tools ||
+		typeof config.tools !== "object" ||
+		Array.isArray(config.tools)
+	) {
+		config.tools = {}
+	}
+
+	const tools = config.tools as Record<string, unknown>
+	tools.alsoAllow = appendUniqueStrings(tools.alsoAllow, SUPERMEMORY_TOOL_NAMES)
+
+	if (Array.isArray(tools.allow)) {
+		tools.allow = appendUniqueStrings(tools.allow, SUPERMEMORY_TOOL_NAMES)
+	}
+}
 
 export function registerCli(
 	api: OpenClawPluginApi,
@@ -58,11 +90,16 @@ export function registerCli(
 					if (!config.plugins) config.plugins = {}
 					const plugins = config.plugins as Record<string, unknown>
 					if (!plugins.entries) plugins.entries = {}
+					if (!plugins.slots) plugins.slots = {}
+					ensureSupermemoryToolsAllowed(config)
 					const entries = plugins.entries as Record<string, unknown>
+					const slots = plugins.slots as Record<string, unknown>
+					slots.memory = "openclaw-supermemory"
 
 					entries["openclaw-supermemory"] = {
 						enabled: true,
 						hooks: {
+							allowPromptInjection: true,
 							allowConversationAccess: true,
 						},
 						config: {
@@ -78,7 +115,7 @@ export function registerCli(
 
 					console.log("\n✓ API key saved to ~/.openclaw/openclaw.json")
 					console.log(
-						"  Restart OpenClaw to apply changes: openclaw gateway --force\n",
+						"  Restart OpenClaw to apply changes: openclaw gateway restart\n",
 					)
 				})
 
@@ -116,6 +153,15 @@ export function registerCli(
 					const containerTag = await ask(
 						`Container tag [openclaw_${defaultTag}]: `,
 					)
+
+					console.log("\nBase URL:")
+					console.log(
+						"  Leave blank for Supermemory cloud (https://api.supermemory.ai).",
+					)
+					console.log(
+						"  Or enter a custom URL for a self-hosted / local instance (e.g. http://localhost:8000).",
+					)
+					const baseUrlInput = await ask(`Base URL [${DEFAULT_BASE_URL}]: `)
 
 					console.log("\nAuto-recall:")
 					console.log(
@@ -280,7 +326,11 @@ export function registerCli(
 					if (!config.plugins) config.plugins = {}
 					const plugins = config.plugins as Record<string, unknown>
 					if (!plugins.entries) plugins.entries = {}
+					if (!plugins.slots) plugins.slots = {}
+					ensureSupermemoryToolsAllowed(config)
 					const entries = plugins.entries as Record<string, unknown>
+					const slots = plugins.slots as Record<string, unknown>
+					slots.memory = "openclaw-supermemory"
 
 					const pluginConfig: Record<string, unknown> = {
 						apiKey: apiKey.trim(),
@@ -290,6 +340,10 @@ export function registerCli(
 						pluginConfig.containerTag = containerTag
 							.trim()
 							.replace(/[^a-zA-Z0-9_]/g, "_")
+					}
+					const baseUrlTrimmed = baseUrlInput.trim()
+					if (baseUrlTrimmed && baseUrlTrimmed !== DEFAULT_BASE_URL) {
+						pluginConfig.baseUrl = baseUrlTrimmed
 					}
 					if (!autoRecall) pluginConfig.autoRecall = false
 					if (!autoCapture) pluginConfig.autoCapture = false
@@ -314,6 +368,7 @@ export function registerCli(
 					entries["openclaw-supermemory"] = {
 						enabled: true,
 						hooks: {
+							allowPromptInjection: true,
 							allowConversationAccess: true,
 						},
 						config: pluginConfig,
@@ -332,6 +387,9 @@ export function registerCli(
 					)
 					console.log(
 						`  Container tag:    ${containerTag.trim() || `openclaw_${defaultTag}`}`,
+					)
+					console.log(
+						`  Base URL:         ${baseUrlTrimmed || DEFAULT_BASE_URL}`,
 					)
 					console.log(`  Auto-recall:      ${autoRecall}`)
 					console.log(`  Auto-capture:     ${autoCapture}`)
@@ -358,7 +416,7 @@ export function registerCli(
 							`  Routing instructions: "${customContainerInstructions.trim().slice(0, 50)}${customContainerInstructions.length > 50 ? "..." : ""}"`,
 						)
 					}
-					console.log("\nRestart OpenClaw to apply: openclaw gateway --force\n")
+					console.log("\nRestart OpenClaw to apply: openclaw gateway restart\n")
 				})
 
 			cmd
@@ -421,6 +479,11 @@ export function registerCli(
 					console.log(
 						`  Container tag:    ${pluginConfig.containerTag ?? defaultTag}`,
 					)
+					const baseUrl =
+						(pluginConfig.baseUrl as string | undefined) ||
+						process.env.SUPERMEMORY_BASE_URL ||
+						DEFAULT_BASE_URL
+					console.log(`  Base URL:         ${baseUrl}`)
 					console.log(`  Auto-recall:      ${pluginConfig.autoRecall ?? true}`)
 					console.log(`  Auto-capture:     ${pluginConfig.autoCapture ?? true}`)
 					console.log(
